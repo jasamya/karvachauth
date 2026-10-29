@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Karwa Chauth</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Montserrat', sans-serif;
+            touch-action: none; /* Prevent scroll on mobile */
+        }
+
+        /* 3D Canvas Container */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Atmospheric Sky Gradient overlay */
+        #atmosphere {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(26, 42, 108, 0.8), rgba(178, 31, 31, 0.6), rgba(253, 187, 45, 0.4));
+            z-index: 2;
+            pointer-events: none;
+            transition: opacity 0.5s ease-out;
+        }
+
+        /* Glassmorphism UI */
+        .ui-wrapper {
+            position: absolute;
+            bottom: 8%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        .ui-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, 20px);
+        }
+
+        .caption {
+            color: #ffffff;
+            font-size: 1.2rem;
+            font-weight: 300;
+            min-height: 3.5rem;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+            margin-bottom: 20px;
+            transition: opacity 0.4s ease;
+        }
+
+        /* Premium Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            height: 30px;
+            cursor: pointer;
+        }
+        
+        input[type=range]:focus { outline: none; }
+        
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #fdbb2d;
+            margin-top: -8px;
+            box-shadow: 0 0 20px rgba(253, 187, 45, 0.8), 0 0 40px rgba(253, 187, 45, 0.4);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+        }
+
+        /* Final Cinematic Message */
+        .final-message {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -40%);
+            width: 90%;
+            max-width: 700px;
+            text-align: center;
+            z-index: 20;
+            color: #fff;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 2s ease-out, transform 2s ease-out;
+            background: radial-gradient(circle, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 80%);
+            padding: 40px;
+            border-radius: 30px;
+        }
+
+        .final-message.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%);
+        }
+
+        .final-message h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 600;
+            color: #ffecd2;
+            margin-bottom: 25px;
+            text-shadow: 0 0 25px rgba(255, 236, 210, 0.6);
+        }
+
+        .final-message p.body-text {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            font-weight: 300;
+            margin-bottom: 35px;
+            color: rgba(255, 255, 255, 0.95);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .final-message p.signature {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-style: italic;
+            color: #fdbb2d;
+            margin-bottom: 40px;
+        }
+
+        button#replay {
+            background: rgba(253, 187, 45, 0.1);
+            border: 1px solid rgba(253, 187, 45, 0.5);
+            color: #ffecd2;
+            padding: 12px 35px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 30px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        button#replay:hover {
+            background: rgba(253, 187, 45, 0.3);
+            box-shadow: 0 0 20px rgba(253, 187, 45, 0.4);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 600px) {
+            .final-message h1 { font-size: 2.2rem; }
+            .final-message p.body-text { font-size: 1rem; }
+            .final-message p.signature { font-size: 1.2rem; }
+            .ui-wrapper { padding: 20px; bottom: 5%; }
+        }
+    </style>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <div id="atmosphere"></div>
+
+    <!-- Interactive UI -->
+    <div class="ui-wrapper" id="uiContainer">
+        <div class="caption" id="captionText">Slide to reveal the moon...</div>
+        <input type="range" id="timeSlider" min="0" max="100" value="0">
+    </div>
+
+    <!-- Final Reveal -->
+    <div class="final-message" id="finalMessage">
+        <h1>Happy Karwa Chauth, My Laddo ❤️🌙</h1>
+        <p class="body-text">
+            Thank you for everything you do, and for choosing us every single day. I don’t say it enough, but I am incredibly lucky to do life with you. Your love makes the hard days easy and the good days magical.
+        </p>
+        <p class="signature">
+            No matter how many moons rise, you’ll always be my favourite part of this universe. ❤️
+        </p>
+        <button id="replay">Experience Again</button>
+    </div>
+
+    <script>
+        // DOM Elements
+        const slider = document.getElementById('timeSlider');
+        const atmosphere = document.getElementById('atmosphere');
+        const captionText = document.getElementById('captionText');
+        const uiContainer = document.getElementById('uiContainer');
+        const finalMessage = document.getElementById('finalMessage');
+        const replayBtn = document.getElementById('replay');
+
+        const captions = [
+            { threshold: 0, text: "The day begins, and so does my wait..." },
+            { threshold: 25, text: "Through the busy hours, you are my anchor..." },
+            { threshold: 50, text: "As the sun sets, the anticipation builds..." },
+            { threshold: 75, text: "Searching the sky for that familiar glow..." },
+            { threshold: 98, text: "And finally..." }
+        ];
+
+        // --- Three.js Setup ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        
+        // Camera
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 15;
+
+        // Renderer
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Texture Loader
+        const textureLoader = new THREE.TextureLoader();
+        // High-res public moon textures
+        const moonTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/moon_1024.jpg');
+        
+        // The Moon Object
+        const geometry = new THREE.SphereGeometry(3.5, 64, 64);
+        const material = new THREE.MeshStandardMaterial({
+            map: moonTexture,
+            bumpMap: moonTexture,
+            bumpScale: 0.05,
+            roughness: 0.8,
+            metalness: 0.1
+        });
+        const moon = new THREE.Mesh(geometry, material);
+        // Start moon slightly lower in the frame
+        moon.position.y = -1;
+        scene.add(moon);
+
+        // Starfield Particles
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.05,
+            transparent: true,
+            opacity: 0.8,
+            sizeAttenuation: true
+        });
+
+        const starsVertices = [];
+        for(let i = 0; i < 3000; i++) {
+            const x = (Math.random() - 0.5) * 100;
+            const y = (Math.random() - 0.5) * 100;
+            const z = (Math.random() - 0.5) * 50 - 20;
+            starsVertices.push(x, y, z);
+        }
+        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+        const starField = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(starField);
+
+        // Lighting (The Sun)
+        const ambientLight = new THREE.AmbientLight(0x111122, 0.05); // Barely visible dark side
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffeedd, 1.5);
+        // Start light behind the moon to create an eclipse / dark moon effect
+        directionalLight.position.set(-10, 0, -10); 
+        scene.add(directionalLight);
+
+        // Target Variables for smooth interpolation (Lerp)
+        let targetLightX = -10;
+        let targetLightZ = -10;
+        let targetMoonRotY = 0;
+        let targetAtmosphereOpacity = 1;
+
+        // Interaction Logic
+        function updateSceneValues() {
+            const val = slider.value / 100;
+            
+            // Move light from behind (-10, -10) to front-right side to reveal craters
+            targetLightX = -10 + (val * 25); 
+            targetLightZ = -10 + (val * 20); 
+
+            // Rotate moon slightly for parallax
+            targetMoonRotY = val * 0.5;
+
+            // Fade out the sunset gradient to reveal deep space
+            targetAtmosphereOpacity = 1 - val;
+
+            // Update UI Captions
+            let currentCaption = captions[0].text;
+            for (let i = captions.length - 1; i >= 0; i--) {
+                if (slider.value >= captions[i].threshold) {
+                    currentCaption = captions[i].text;
+                    break;
+                }
+            }
+            if (captionText.innerText !== currentCaption) {
+                captionText.style.opacity = 0;
+                setTimeout(() => {
+                    captionText.innerText = currentCaption;
+                    captionText.style.opacity = 1;
+                }, 200);
+            }
+
+            // Final Reveal
+            if (slider.value == 100) {
+                uiContainer.classList.add('ui-hidden');
+                setTimeout(() => {
+                    finalMessage.classList.add('visible');
+                }, 800);
+            }
+        }
+
+        slider.addEventListener('input', updateSceneValues);
+
+        replayBtn.addEventListener('click', () => {
+            finalMessage.classList.remove('visible');
+            setTimeout(() => {
+                slider.value = 0;
+                updateSceneValues();
+                uiContainer.classList.remove('ui-hidden');
+            }, 1000);
+        });
+
+        // Animation Loop with smooth Lerping
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Smooth interpolation (lerp) for cinematic feel
+            directionalLight.position.x += (targetLightX - directionalLight.position.x) * 0.05;
+            directionalLight.position.z += (targetLightZ - directionalLight.position.z) * 0.05;
+            moon.rotation.y += (targetMoonRotY - moon.rotation.y) * 0.05;
+            
+            // Slow idle rotations
+            moon.rotation.y += 0.0005;
+            starField.rotation.y += 0.0002;
+
+            // Apply opacity
+            const currentOpacity = parseFloat(atmosphere.style.opacity || 1);
+            atmosphere.style.opacity = currentOpacity + (targetAtmosphereOpacity - currentOpacity) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize
+        updateSceneValues();
+        animate();
+    </script>
+</body>
+</html>
